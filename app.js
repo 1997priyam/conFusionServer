@@ -3,6 +3,11 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+var passport = require('passport');
+var authenticate = require('./authenticate');
+var config = require('./config');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -12,6 +17,16 @@ var leaderRouter = require('./routes/leaderRouter');
 
 var app = express();
 
+//Connecting to Database
+const mongoose = require('mongoose');
+
+const url = config.mongoUrl;
+const connect = mongoose.connect(url, { useNewUrlParser: true });
+
+connect.then((db) => {
+    console.log("Connected correctly to server");
+}, (err) => { console.log(err); });
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -19,11 +34,17 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(cookieParser('12345-67890-09876-54321'));
+
+
+app.use(passport.initialize());
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
